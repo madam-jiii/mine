@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>deewaniyat · cinematic lyrics</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      background: #0b0a0f;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      background: radial-gradient(circle at 30% 20%, #1e1428, #0b0813);
+      overflow: hidden;
+    }
+    /* background layer with cinematic zoom */
+    .bg-image-layer {
+      position: absolute;
+      inset: -5%;
+      z-index: 0;
+      background-image: url('audio/img.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.45;
+      pointer-events: none;
+      filter: blur(0.8px) saturate(1.1);
+      transition: transform 0.1s ease-out;
+      will-change: transform;
+    }
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(8,5,12,0.5) 80%, #0b0813 100%);
+      pointer-events: none;
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+      pointer-events: none;
+    }
+    .moon {
+      position: absolute;
+      top: 8%;
+      right: 12%;
+      width: 14vmin;
+      height: 14vmin;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fae8d0, #d9b68b);
+      box-shadow: 0 0 60px #f3d6b0, 0 0 120px rgba(210, 150, 100, 0.3);
+      opacity: 0.6;
+      transition: box-shadow 0.2s ease;
+      will-change: box-shadow;
+      z-index: 2;
+    }
+    .moon-glow {
+      position: absolute;
+      top: 6%;
+      right: 10%;
+      width: 22vmin;
+      height: 22vmin;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(210,150,100,0.15) 0%, transparent 70%);
+      filter: blur(30px);
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.3s;
+    }
+    .landscape {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 35%;
+      background: linear-gradient(0deg, #0e0a16 0%, #1c1428 40%, transparent 100%);
+      clip-path: ellipse(70% 60% at 50% 100%);
+      opacity: 0.5;
+      z-index: 1;
+    }
+    .silhouette {
+      position: absolute;
+      bottom: 10%;
+      left: 5%;
+      width: 30%;
+      height: 20%;
+      background: radial-gradient(ellipse at 20% 100%, #0c0810, transparent 70%);
+      filter: blur(1px);
+      opacity: 0.25;
+      z-index: 1;
+    }
+    .silhouette::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 10%;
+      width: 50%;
+      height: 100%;
+      background: radial-gradient(ellipse at 80% 100%, #0c0810, transparent 70%);
+    }
+    /* particles & petals - cached selectors for performance */
+    .particles-container {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle, .petal {
+      position: absolute;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+    }
+    .particle {
+      border-radius: 50%;
+      background: rgba(255, 200, 180, 0.25);
+      box-shadow: 0 0 12px rgba(255, 180, 160, 0.15);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .petal {
+      width: 1.4vmin;
+      height: 2.6vmin;
+      background: radial-gradient(ellipse at 30% 30%, #f2b8c0, #a54a6b);
+      border-radius: 50% 50% 50% 0;
+      opacity: 0.25;
+      transform-origin: center;
+      filter: blur(0.4px);
+    }
+    /* lyrics */
+    .lyrics-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      padding: 12vh 8vw;
+      pointer-events: none;
+    }
+    .lyric-line {
+      font-size: clamp(2.2rem, 8vmin, 5.5rem);
+      color: #f0e2e8;
+      text-shadow: 0 0 30px rgba(180, 80, 120, 0.15), 0 0 60px rgba(120, 40, 80, 0.08);
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      line-height: 1.5;
+      text-align: center;
+      transition: opacity 1s cubic-bezier(0.25, 0.1, 0.15, 1), transform 1.1s cubic-bezier(0.2, 0.0, 0.0, 1), filter 1s ease, text-shadow 0.8s ease;
+      opacity: 0;
+      transform: translateY(3vmin) scale(0.94);
+      filter: blur(8px);
+      will-change: transform, opacity, filter;
+      position: absolute;
+      width: 92%;
+      max-width: 900px;
+      pointer-events: none;
+      word-break: break-word;
+    }
+    .lyric-line.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0px);
+      text-shadow: 0 0 60px rgba(220, 120, 160, 0.4), 0 0 120px rgba(180, 70, 120, 0.2);
+      color: #fff2f8;
+      z-index: 12;
+    }
+    .lyric-line.prev {
+      opacity: 0.12;
+      transform: translateY(-3.5vmin) scale(0.9);
+      filter: blur(4px);
+      z-index: 8;
+      color: #b8a0b0;
+    }
+    .lyric-line.next {
+      opacity: 0.06;
+      transform: translateY(3.5vmin) scale(0.88);
+      filter: blur(7px);
+      z-index: 6;
+      color: #907a88;
+    }
+    /* landing cinematic */
+    .landing {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at 50% 40%, #1e1428, #0b0813);
+      transition: opacity 2s ease, backdrop-filter 2s;
+      cursor: pointer;
+      backdrop-filter: blur(0px);
+    }
+    .landing.fade {
+      opacity: 0;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+    .landing-title {
+      font-size: clamp(3rem, 12vmin, 7rem);
+      color: #f0dce8;
+      letter-spacing: 0.25em;
+      text-shadow: 0 0 80px rgba(200, 120, 160, 0.3);
+      font-weight: 300;
+      margin-bottom: 2vh;
+      font-family: 'Georgia', serif;
+    }
+    .landing-sub {
+      font-size: clamp(1rem, 2.5vmin, 1.6rem);
+      color: #b090a0;
+      letter-spacing: 0.6em;
+      border: 1px solid rgba(200, 150, 170, 0.2);
+      padding: 1.4vmin 4vmin;
+      border-radius: 60px;
+      backdrop-filter: blur(4px);
+      background: rgba(20, 12, 24, 0.15);
+      transition: all 0.5s;
+      font-weight: 300;
+    }
+    .landing-sub:hover {
+      background: rgba(60, 30, 50, 0.25);
+      border-color: rgba(220, 160, 180, 0.4);
+      box-shadow: 0 0 50px rgba(160, 80, 120, 0.15);
+    }
+    .landing-glow {
+      position: absolute;
+      width: 60vmin;
+      height: 60vmin;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(180,100,140,0.08) 0%, transparent 70%);
+      filter: blur(60px);
+      pointer-events: none;
+    }
+    /* ending */
+    .ending {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(8, 5, 12, 0.75);
+      backdrop-filter: blur(14px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 2.5s ease;
+    }
+    .ending.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .ending-text {
+      font-size: clamp(1.8rem, 4.5vmin, 3.6rem);
+      color: #e8d0dc;
+      text-align: center;
+      letter-spacing: 0.08em;
+      line-height: 1.8;
+      font-weight: 300;
+      text-shadow: 0 0 60px rgba(180, 100, 140, 0.2);
+      padding: 0 8vw;
+    }
+    .ending-restart {
+      margin-top: 4vh;
+      font-size: clamp(1rem, 2vmin, 1.4rem);
+      color: #b090a0;
+      letter-spacing: 0.4em;
+      border: 1px solid rgba(200, 150, 170, 0.2);
+      padding: 1.4vmin 4.5vmin;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: all 0.4s;
+      background: rgba(20, 12, 24, 0.2);
+    }
+    .ending-restart:hover {
+      background: rgba(60, 30, 50, 0.3);
+      border-color: rgba(220, 160, 180, 0.4);
+    }
+    .status-badge {
+      position: absolute;
+      bottom: 3vh;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      color: rgba(180, 140, 160, 0.2);
+      font-size: clamp(0.5rem, 1vmin, 0.8rem);
+      letter-spacing: 0.3em;
+      font-family: 'Georgia', serif;
+      pointer-events: none;
+    }
+    @media (max-width: 600px) {
+      .lyric-line {
+        font-size: clamp(1.6rem, 6.5vmin, 2.8rem);
+        width: 95%;
+      }
+      .moon {
+        width: 12vmin;
+        height: 12vmin;
+        top: 6%;
+        right: 8%;
+      }
+      .moon-glow {
+        width: 18vmin;
+        height: 18vmin;
+        top: 4%;
+        right: 6%;
+      }
+    }
+    /* reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .particle, .petal, .bg-image-layer, .moon, .lyric-line {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="bg-image-layer" id="bgImage"></div>
+  <div class="bg-overlay"></div>
+  <div class="vignette"></div>
+  <div class="moon-glow" id="moonGlow"></div>
+  <div class="moon" id="moon"></div>
+  <div class="landscape"></div>
+  <div class="silhouette"></div>
+  <div class="particles-container" id="particlesContainer"></div>
+  <div class="lyrics-container" id="lyricsContainer"></div>
+  <div class="status-badge">✦ deewaniyat ✦</div>
+  <div class="landing" id="landing">
+    <div class="landing-glow"></div>
+    <div class="landing-title">✦</div>
+    <div class="landing-sub">begin experience</div>
+  </div>
+  <div class="ending" id="ending">
+    <div class="ending-text">Some songs are heard.<br>Some are felt.</div>
+    <div class="ending-restart" id="endingRestart">experience again</div>
+  </div>
+</div>
+<script>
+  (function(){
+    'use strict';
+
+    // DOM refs
+    const container = document.getElementById('lyricsContainer');
+    const landing = document.getElementById('landing');
+    const ending = document.getElementById('ending');
+    const endingRestart = document.getElementById('endingRestart');
+    const bgImage = document.getElementById('bgImage');
+    const moon = document.getElementById('moon');
+    const moonGlow = document.getElementById('moonGlow');
+    const particlesContainer = document.getElementById('particlesContainer');
+
+    // state
+    let lyrics = [];
+    let currentIndex = -1;
+    let audio = null;
+    let animFrame = null;
+    let lastTime = -1;
+    let endingShown = false;
+    let lyricElements = [];
+    let audioCtx = null;
+    let analyser = null;
+    let dataArray = null;
+    let isPlaying = false;
+
+    // cached particle/petal arrays
+    let particleEls = [];
+    let petalEls = [];
+
+    // --- LRC parsing ---
+    function parseLRC(lrcText) {
+      const lines = lrcText.split(/\r?\n/);
+      const parsed = [];
+      const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
+      for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
+        const match = line.match(timeRegex);
+        if (match) {
+          const min = parseInt(match[1], 10);
+          const sec = parseInt(match[2], 10);
+          const ms = parseInt(match[3].padEnd(3, '0'), 10);
+          const time = min * 60 + sec + ms / 1000;
+          const text = line.replace(/\[.*?\]/g, '').trim();
+          if (text) {
+            parsed.push({ time, text });
+          }
+        }
+      }
+      parsed.sort((a, b) => a.time - b.time);
+      return parsed;
+    }
+
+    // --- particles & petals generation (cached) ---
+    function createParticlesAndPetals() {
+      // clear
+      particlesContainer.innerHTML = '';
+      particleEls = [];
+      petalEls = [];
+
+      const fragment = document.createDocumentFragment();
+
+      // particles
+      for (let i = 0; i < 50; i++) {
+        const el = document.createElement('div');
+        el.className = 'particle';
+        const size = 2 + Math.random() * 6;
+        el.style.width = size + 'px';
+        el.style.height = size + 'px';
+        el.style.left = Math.random() * 100 + '%';
+        el.style.top = Math.random() * 100 + '%';
+        el.style.opacity = 0.05 + Math.random() * 0.2;
+        const tx = (Math.random() - 0.5) * 30;
+        const ty = (Math.random() - 0.5) * 30;
+        el.style.transform = `translate(${tx}px, ${ty}px) scale(${0.8 + Math.random() * 0.6})`;
+        el.dataset.baseOpacity = el.style.opacity;
+        fragment.appendChild(el);
+        particleEls.push(el);
+      }
+
+      // petals
+      for (let i = 0; i < 25; i++) {
+        const el = document.createElement('div');
+        el.className = 'petal';
+        el.style.left = Math.random() * 100 + '%';
+        el.style.top = Math.random() * 100 + '%';
+        el.style.opacity = 0.05 + Math.random() * 0.2;
+        el.style.transform = `rotate(${Math.random() * 360}deg) scale(${0.6 + Math.random() * 0.8})`;
+        el.dataset.baseOpacity = el.style.opacity;
+        fragment.appendChild(el);
+        petalEls.push(el);
+      }
+
+      particlesContainer.appendChild(fragment);
+
+      // store refs for animation
+    }
+
+    // --- render lyrics ---
+    function renderLyrics(lines) {
+      container.innerHTML = '';
+      lyricElements = [];
+      const fragment = document.createDocumentFragment();
+      lines.forEach((line, idx) => {
+        const el = document.createElement('div');
+        el.className = 'lyric-line';
+        el.textContent = line.text;
+        el.dataset.index = idx;
+        fragment.appendChild(el);
+        lyricElements.push(el);
+      });
+      container.appendChild(fragment);
+    }
+
+    // --- update lyrics with cinematic transitions ---
+    function updateLyrics(time) {
+      if (!lyrics.length || !lyricElements.length) return;
+      let newIndex = -1;
+      for (let i = lyrics.length - 1; i >= 0; i--) {
+        if (time >= lyrics[i].time) {
+          newIndex = i;
+          break;
+        }
+      }
+      if (newIndex !== currentIndex) {
+        currentIndex = newIndex;
+        lyricElements.forEach((el, idx) => {
+          el.className = 'lyric-line';
+          el.style.opacity = '';
+          el.style.transform = '';
+          el.style.filter = '';
+          el.style.textShadow = '';
+          if (idx === currentIndex) {
+            el.classList.add('active');
+          } else if (idx === currentIndex - 1) {
+            el.classList.add('prev');
+          } else if (idx === currentIndex + 1) {
+            el.classList.add('next');
+          } else if (idx < currentIndex - 1) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-4vmin) scale(0.88)';
+            el.style.filter = 'blur(10px)';
+          } else if (idx > currentIndex + 1) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(4vmin) scale(0.88)';
+            el.style.filter = 'blur(10px)';
+          }
+        });
+      }
+    }
+
+    // --- audio context ---
+    function setupAudioContext() {
+      if (!audioCtx && audio) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const src = audioCtx.createMediaElementSource(audio);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 128;
+        src.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+      }
+    }
+
+    function getVolume() {
+      if (!analyser || !dataArray) return 0;
+      analyser.getByteFrequencyData(dataArray);
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        sum += dataArray[i];
+      }
+      return sum / dataArray.length / 255;
+    }
+
+    // --- main animation loop ---
+    function animateLoop() {
+      if (!audio) { animFrame = requestAnimationFrame(animateLoop); return; }
+      const time = audio.currentTime;
+      if (time !== lastTime) {
+        lastTime = time;
+        updateLyrics(time);
+
+        const vol = getVolume();
+        const intensity = 0.2 + vol * 0.8;
+
+        // moon glow
+        const glowBase = 50 + vol * 100;
+        moon.style.boxShadow = `0 0 ${glowBase}px #f3d6b0, 0 0 ${glowBase * 1.6}px rgba(210, 150, 100, ${0.15 + vol * 0.3})`;
+        moonGlow.style.opacity = 0.3 + vol * 0.4;
+
+        // particles & petals - use cached arrays
+        const particleCount = particleEls.length;
+        for (let i = 0; i < particleCount; i++) {
+          const el = particleEls[i];
+          const base = parseFloat(el.dataset.baseOpacity) || 0.1;
+          el.style.opacity = Math.min(0.5, base + vol * 0.25);
+          const scale = 1 + vol * 0.5;
+          el.style.transform = `scale(${scale})`;
+        }
+        const petalCount = petalEls.length;
+        for (let i = 0; i < petalCount; i++) {
+          const el = petalEls[i];
+          const base = parseFloat(el.dataset.baseOpacity) || 0.1;
+          el.style.opacity = Math.min(0.4, base + vol * 0.2);
+        }
+
+        // background subtle movement
+        const moveX = (vol - 0.3) * 4;
+        const moveY = (vol - 0.3) * 2;
+        bgImage.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.03)`;
+
+        // check end
+        if (audio.ended || time >= audio.duration - 0.2) {
+          if (!endingShown && lyrics.length) {
+            endingShown = true;
+            ending.classList.add('show');
+            // keep last lyric active
+            const last = lyrics.length - 1;
+            lyricElements.forEach((el, idx) => {
+              el.className = 'lyric-line';
+              if (idx === last) el.classList.add('active');
+              else el.style.opacity = '0';
+            });
+          }
+        }
+      }
+      animFrame = requestAnimationFrame(animateLoop);
+    }
+
+    // --- start experience ---
+    function startExperience() {
+      if (!audio) return;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+      isPlaying = true;
+      landing.classList.add('fade');
+      ending.classList.remove('show');
+      endingShown = false;
+      currentIndex = -1;
+      lyricElements.forEach(el => { el.className = 'lyric-line'; });
+      lastTime = -1;
+      if (animFrame) cancelAnimationFrame(animFrame);
+      animateLoop();
+    }
+
+    function restartExperience() {
+      if (!audio) return;
+      ending.classList.remove('show');
+      endingShown = false;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+      currentIndex = -1;
+      lyricElements.forEach(el => { el.className = 'lyric-line'; });
+      lastTime = -1;
+    }
+
+    // --- load media and init ---
+    function loadMedia() {
+      audio = new Audio('audio/song.mp3');
+      audio.preload = 'auto';
+      audio.volume = 0.7;
+      audio.loop = false;
+      setupAudioContext();
+
+      fetch('audio/song.lrc')
+        .then(res => {
+          if (!res.ok) throw new Error('LRC not found');
+          return res.text();
+        })
+        .then(text => {
+          lyrics = parseLRC(text);
+          if (!lyrics.length) throw new Error('No lyrics parsed');
+          renderLyrics(lyrics);
+          currentIndex = -1;
+          lyricElements.forEach(el => { el.className = 'lyric-line'; });
+          startExperience();
+        })
+        .catch(() => {
+          // fallback
+          lyrics = [{ time: 0, text: '♪' }, { time: 5, text: 'Tu hi armaan' }, { time: 10, text: 'Tu hi sach hai' }];
+          renderLyrics(lyrics);
+          currentIndex = -1;
+          startExperience();
+        });
+    }
+
+    // --- event listeners ---
+    landing.addEventListener('click', function() {
+      if (!audio) {
+        loadMedia();
+      } else {
+        startExperience();
+      }
+    });
+
+    endingRestart.addEventListener('click', restartExperience);
+
+    // touch start for mobile
+    document.addEventListener('touchstart', function() {
+      if (!audio && !landing.classList.contains('fade')) {
+        loadMedia();
+      }
+    }, { once: true });
+
+    // preload
+    const preloadAudio = new Audio('audio/song.mp3');
+    preloadAudio.preload = 'auto';
+    fetch('audio/song.lrc')
+      .then(r => r.text())
+      .then(text => {
+        lyrics = parseLRC(text);
+        if (lyrics.length) {
+          renderLyrics(lyrics);
+        }
+      })
+      .catch(() => {});
+
+    // initialize particles
+    createParticlesAndPetals();
+
+    // parallax
+    let tiltX = 0, tiltY = 0;
+    document.addEventListener('mousemove', function(e) {
+      const x = (e.clientX / window.innerWidth - 0.5) * 2;
+      const y = (e.clientY / window.innerHeight - 0.5) * 2;
+      tiltX = x * 6;
+      tiltY = y * 6;
+      bgImage.style.transform = `translate(${tiltX * 0.3}px, ${tiltY * 0.3}px) scale(1.03)`;
+    });
+
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener('deviceorientation', function(e) {
+        const gamma = e.gamma || 0;
+        const beta = e.beta || 0;
+        const x = Math.min(1, Math.max(-1, gamma / 30));
+        const y = Math.min(1, Math.max(-1, beta / 30));
+        bgImage.style.transform = `translate(${x * 8}px, ${y * 8}px) scale(1.03)`;
+      });
+    }
+
+    // handle visibility change to keep audio alive
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden && audio && !audio.paused) {
+        // keep playing
+      }
+    });
+
+  })();
+</script>
+</body>
+</html>
